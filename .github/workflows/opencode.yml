@@ -32,9 +32,6 @@ jobs:
           else
             echo "skip_opencode=false" >> $GITHUB_OUTPUT
           fi
-         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run opencode
         if: steps.validate.outputs.skip_opencode != 'true'
