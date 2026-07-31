@@ -62,7 +62,7 @@ jobs:
           fi
         # 仅在之前的步骤成功后运行（默认行为）
       - name: Run opencode
-        uses: anomalyco/opencode/github@latest
+        uses: anomalyco/opencode/github@v1.18.4
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
