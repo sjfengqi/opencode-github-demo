@@ -23,8 +23,19 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Validate OPENCODE_API_KEY
+        id: validate
+        run: |
+          if [ -z "$OPENCODE_API_KEY" ]; then
+            echo "OPENCODE_API_KEY is not set or is empty. Skipping opencode step."
+            echo "skip_opencode=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_opencode=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run opencode
-        uses: anomalyco/opencode/github@v1.18.4
+        if: steps.validate.outputs.skip_opencode != 'true'
+        uses: anomalyco/opencode/github@v1.18.10
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
