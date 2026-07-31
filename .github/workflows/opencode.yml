@@ -25,6 +25,8 @@ jobs:
 
       - name: Validate OPENCODE_API_KEY
         id: validate
+        env:
+         OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           if [ -z "$OPENCODE_API_KEY" ]; then
             echo "OPENCODE_API_KEY is not set or is empty. Skipping opencode step."
