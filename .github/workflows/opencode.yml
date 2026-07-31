@@ -9,10 +9,8 @@ on:
 jobs:
   opencode:
     if: |
-      contains(github.event.comment.body, ' /oc') ||
-      startsWith(github.event.comment.body, '/oc') ||
-      contains(github.event.comment.body, ' /opencode') ||
-      startsWith(github.event.comment.body, '/opencode')
+      contains(github.event.comment.body, '/oc') ||
+      contains(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -25,8 +23,46 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Validate comment author is a collaborator
+        # 使用 github-script 通过 REST API 检查评论者是否为合作者/有权限
+        # 如果不是合作者，则失败并停止，避免给非信任触发者使用 secrets 的机会
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const comment = context.payload.comment;
+            if (!comment || !comment.user || !comment.user.login) {
+              throw new Error('No comment user found in payload; refusing to proceed.');
+            }
+            const commenter = comment.user.login;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // 查询合作者权限
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner,
+                repo,
+                username: commenter,
+              });
+              const perm = (data && data.permission) ? data.permission : 'none';
+              core.info(`Comment by: ${commenter}, permission level: ${perm}`);
+              if (perm === 'none') {
+                throw new Error(`Comment author '${commenter}' is not a collaborator; refusing to run opencode.`);
+              }
+            } catch (err) {
+              // 如果 API 返回 404 / 权限不足等，直接失败
+              throw new Error(`Failed to verify commenter permission: ${err.message}`);
+            }
+
+      - name: Check OPENCODE_API_KEY secret is set
+        run: |
+          if [ -z "${{ secrets.OPENCODE_API_KEY }}" ]; then
+            echo "::error::OPENCODE_API_KEY secret is not set. Add it under Settings → Secrets → Actions."
+            exit 1
+          fi
+        # 仅在之前的步骤成功后运行（默认行为）
       - name: Run opencode
-        uses: anomalyco/opencode/github@v1.18.4
+        uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
