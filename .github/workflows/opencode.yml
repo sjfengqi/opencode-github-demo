@@ -31,4 +31,3 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
           model: opencode/big-pickle
-          use_oidc: false # 阻止action去请求github idtoken
